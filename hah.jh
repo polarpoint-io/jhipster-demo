@@ -1,6 +1,6 @@
 
 /*
- * This is a microservice e-commerce store sample with Gateway and three microservice applications
+ * Gateway and three microservice applications
  * This uses Istio for native kubernetes service discovery and JWT authentication
  * This also creates the required Kubernetes deployment manifests and Istio routes
  */
