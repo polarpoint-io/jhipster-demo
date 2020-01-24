@@ -183,7 +183,7 @@ entity BasketEntry {
     basketId String
     canEdit Boolean
     prodictId Long
-    quantity Long
+    quantity Long required
     refundable Boolean
     removeable Boolean
     totalPrice BigDecimal required
