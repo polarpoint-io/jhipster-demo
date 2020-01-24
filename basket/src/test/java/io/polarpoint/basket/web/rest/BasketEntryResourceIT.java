@@ -224,6 +224,24 @@ public class BasketEntryResourceIT {
 
     @Test
     @Transactional
+    public void checkQuantityIsRequired() throws Exception {
+        int databaseSizeBeforeTest = basketEntryRepository.findAll().size();
+        // set the field null
+        basketEntry.setQuantity(null);
+
+        // Create the BasketEntry, which fails.
+
+        restBasketEntryMockMvc.perform(post("/api/basket-entries")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(basketEntry)))
+            .andExpect(status().isBadRequest());
+
+        List<BasketEntry> basketEntryList = basketEntryRepository.findAll();
+        assertThat(basketEntryList).hasSize(databaseSizeBeforeTest);
+    }
+
+    @Test
+    @Transactional
     public void checkTotalPriceIsRequired() throws Exception {
         int databaseSizeBeforeTest = basketEntryRepository.findAll().size();
         // set the field null

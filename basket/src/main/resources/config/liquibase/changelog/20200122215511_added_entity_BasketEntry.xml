@@ -25,7 +25,7 @@
                 <constraints nullable="true" />
             </column>
             <column name="quantity" type="bigint">
-                <constraints nullable="true" />
+                <constraints nullable="false" />
             </column>
             <column name="refundable" type="boolean">
                 <constraints nullable="true" />
