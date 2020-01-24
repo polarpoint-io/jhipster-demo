@@ -33,7 +33,8 @@ public class BasketEntry implements Serializable {
     @Column(name = "prodict_id")
     private Long prodictId;
 
-    @Column(name = "quantity")
+    @NotNull
+    @Column(name = "quantity", nullable = false)
     private Long quantity;
 
     @Column(name = "refundable")

@@ -31,8 +31,8 @@
     "creationTimestamp": 1579730108483,
     "entitySuffix": "",
     "dtoSuffix": "DTO",
-    "otherModules": [],
-    "blueprints": []
+    "blueprints": [],
+    "otherModules": []
   },
   "entities": ["Product", "Rulez", "Category", "SubscriptionGroup", "Branch", "Field", "Page", "Token", "VatRate"]
 }

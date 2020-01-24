@@ -102,7 +102,16 @@ export const BasketEntryUpdate = (props: IBasketEntryUpdateProps) => {
                 <Label id="quantityLabel" for="basket-entry-quantity">
                   <Translate contentKey="hahApp.basketBasketEntry.quantity">Quantity</Translate>
                 </Label>
-                <AvField id="basket-entry-quantity" type="string" className="form-control" name="quantity" />
+                <AvField
+                  id="basket-entry-quantity"
+                  type="string"
+                  className="form-control"
+                  name="quantity"
+                  validate={{
+                    required: { value: true, errorMessage: translate('entity.validation.required') },
+                    number: { value: true, errorMessage: translate('entity.validation.number') }
+                  }}
+                />
               </AvGroup>
               <AvGroup check>
                 <Label id="refundableLabel">

@@ -15,7 +15,10 @@
         },
         {
             "fieldName": "quantity",
-            "fieldType": "Long"
+            "fieldType": "Long",
+            "fieldValidateRules": [
+                "required"
+            ]
         },
         {
             "fieldName": "refundable",
