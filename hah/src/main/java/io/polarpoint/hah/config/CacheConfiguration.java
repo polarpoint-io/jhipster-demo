@@ -1,117 +1,65 @@
 package io.polarpoint.hah.config;
 
-import io.github.jhipster.config.JHipsterConstants;
+import java.time.Duration;
+
+import org.ehcache.config.builders.*;
+import org.ehcache.jsr107.Eh107Configuration;
+
+import org.hibernate.cache.jcache.ConfigSettings;
 import io.github.jhipster.config.JHipsterProperties;
 
-import com.hazelcast.config.*;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.Hazelcast;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.springframework.cache.CacheManager;
+import org.springframework.boot.autoconfigure.cache.JCacheManagerCustomizer;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.*;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 
 @Configuration
 @EnableCaching
-public class CacheConfiguration implements DisposableBean {
+public class CacheConfiguration {
 
-    private final Logger log = LoggerFactory.getLogger(CacheConfiguration.class);
+    private final javax.cache.configuration.Configuration<Object, Object> jcacheConfiguration;
 
-    private final Environment env;
+    public CacheConfiguration(JHipsterProperties jHipsterProperties) {
+        JHipsterProperties.Cache.Ehcache ehcache = jHipsterProperties.getCache().getEhcache();
 
-    public CacheConfiguration(Environment env) {
-        this.env = env;
-    }
-
-    @Override
-    public void destroy() throws Exception {
-        log.info("Closing Cache Manager");
-        Hazelcast.shutdownAll();
-    }
-
-    @Bean
-    public CacheManager cacheManager(HazelcastInstance hazelcastInstance) {
-        log.debug("Starting HazelcastCacheManager");
-        return new com.hazelcast.spring.cache.HazelcastCacheManager(hazelcastInstance);
+        jcacheConfiguration = Eh107Configuration.fromEhcacheCacheConfiguration(
+            CacheConfigurationBuilder.newCacheConfigurationBuilder(Object.class, Object.class,
+                ResourcePoolsBuilder.heap(ehcache.getMaxEntries()))
+                .withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(ehcache.getTimeToLiveSeconds())))
+                .build());
     }
 
     @Bean
-    public HazelcastInstance hazelcastInstance(JHipsterProperties jHipsterProperties) {
-        log.debug("Configuring Hazelcast");
-        HazelcastInstance hazelCastInstance = Hazelcast.getHazelcastInstanceByName("hah");
-        if (hazelCastInstance != null) {
-            log.debug("Hazelcast already initialized");
-            return hazelCastInstance;
+    public HibernatePropertiesCustomizer hibernatePropertiesCustomizer(javax.cache.CacheManager cacheManager) {
+        return hibernateProperties -> hibernateProperties.put(ConfigSettings.CACHE_MANAGER, cacheManager);
+    }
+
+    @Bean
+    public JCacheManagerCustomizer cacheManagerCustomizer() {
+        return cm -> {
+            createCache(cm, io.polarpoint.hah.repository.UserRepository.USERS_BY_LOGIN_CACHE);
+            createCache(cm, io.polarpoint.hah.repository.UserRepository.USERS_BY_EMAIL_CACHE);
+            createCache(cm, io.polarpoint.hah.domain.User.class.getName());
+            createCache(cm, io.polarpoint.hah.domain.Authority.class.getName());
+            createCache(cm, io.polarpoint.hah.domain.User.class.getName() + ".authorities");
+            createCache(cm, io.polarpoint.hah.domain.Branch.class.getName());
+            createCache(cm, io.polarpoint.hah.domain.SubscriptionGroup.class.getName());
+            createCache(cm, io.polarpoint.hah.domain.SubscriptionGroup.class.getName() + ".subscriptionGroups");
+            createCache(cm, io.polarpoint.hah.domain.Token.class.getName());
+            createCache(cm, io.polarpoint.hah.domain.Token.class.getName() + ".products");
+            createCache(cm, io.polarpoint.hah.domain.Rulez.class.getName());
+            createCache(cm, io.polarpoint.hah.domain.VatRate.class.getName());
+            createCache(cm, io.polarpoint.hah.domain.VatAnalysis.class.getName());
+            // jhipster-needle-ehcache-add-entry
+        };
+    }
+
+    private void createCache(javax.cache.CacheManager cm, String cacheName) {
+        javax.cache.Cache<Object, Object> cache = cm.getCache(cacheName);
+        if (cache != null) {
+            cm.destroyCache(cacheName);
         }
-        Config config = new Config();
-        config.setInstanceName("hah");
-        config.getNetworkConfig().setPort(5701);
-        config.getNetworkConfig().setPortAutoIncrement(true);
-
-        // In development, remove multicast auto-configuration
-        if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT))) {
-            System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
-
-            config.getNetworkConfig().getJoin().getAwsConfig().setEnabled(false);
-            config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-            config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
-        }
-        config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
-
-        // Full reference is available at: http://docs.hazelcast.org/docs/management-center/3.9/manual/html/Deploying_and_Starting.html
-        config.setManagementCenterConfig(initializeDefaultManagementCenterConfig(jHipsterProperties));
-        config.getMapConfigs().put("io.polarpoint.hah.domain.*", initializeDomainMapConfig(jHipsterProperties));
-        return Hazelcast.newHazelcastInstance(config);
-    }
-
-    private ManagementCenterConfig initializeDefaultManagementCenterConfig(JHipsterProperties jHipsterProperties) {
-        ManagementCenterConfig managementCenterConfig = new ManagementCenterConfig();
-        managementCenterConfig.setEnabled(jHipsterProperties.getCache().getHazelcast().getManagementCenter().isEnabled());
-        managementCenterConfig.setUrl(jHipsterProperties.getCache().getHazelcast().getManagementCenter().getUrl());
-        managementCenterConfig.setUpdateInterval(jHipsterProperties.getCache().getHazelcast().getManagementCenter().getUpdateInterval());
-        return managementCenterConfig;
-    }
-
-    private MapConfig initializeDefaultMapConfig(JHipsterProperties jHipsterProperties) {
-        MapConfig mapConfig = new MapConfig();
-
-        /*
-        Number of backups. If 1 is set as the backup-count for example,
-        then all entries of the map will be copied to another JVM for
-        fail-safety. Valid numbers are 0 (no backup), 1, 2, 3.
-        */
-        mapConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
-
-        /*
-        Valid values are:
-        NONE (no eviction),
-        LRU (Least Recently Used),
-        LFU (Least Frequently Used).
-        NONE is the default.
-        */
-        mapConfig.setEvictionPolicy(EvictionPolicy.LRU);
-
-        /*
-        Maximum size of the map. When max size is reached,
-        map is evicted based on the policy defined.
-        Any integer between 0 and Integer.MAX_VALUE. 0 means
-        Integer.MAX_VALUE. Default is 0.
-        */
-        mapConfig.setMaxSizeConfig(new MaxSizeConfig(0, MaxSizeConfig.MaxSizePolicy.USED_HEAP_SIZE));
-
-        return mapConfig;
-    }
-
-    private MapConfig initializeDomainMapConfig(JHipsterProperties jHipsterProperties) {
-        MapConfig mapConfig = new MapConfig();
-        mapConfig.setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
-        return mapConfig;
+        cm.createCache(cacheName, jcacheConfiguration);
     }
 
 }

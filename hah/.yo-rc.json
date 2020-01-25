@@ -21,7 +21,7 @@
     "baseName": "hah",
     "applicationType": "gateway",
     "authenticationType": "jwt",
-    "cacheProvider": "hazelcast",
+    "cacheProvider": "ehcache",
     "buildTool": "gradle",
     "clientFramework": "react",
     "useSass": true,
