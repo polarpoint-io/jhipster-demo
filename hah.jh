@@ -218,6 +218,7 @@ deployment {
   appsFolders [branch, basket, product]
   dockerRepositoryName "image.polarpoint.io"
   serviceDiscoveryType no
+  istioRoute true
   istio true
   kubernetesServiceType Ingress
   kubernetesNamespace dev-hih-01
