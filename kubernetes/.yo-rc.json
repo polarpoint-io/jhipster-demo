@@ -2,7 +2,7 @@
   "generator-jhipster": {
     "deploymentType": "kubernetes",
     "gatewayType": "zuul",
-    "monitoring": "no",
+    "monitoring": "prometheus",
     "directoryPath": "../",
     "appsFolders": [
       "branch",
@@ -15,7 +15,7 @@
     "dockerRepositoryName": "image.polarpoint.io",
     "dockerPushCommand": "docker push",
     "kubernetesNamespace": "dev-hih-01",
-    "kubernetesServiceType": "Ingress",
+    "kubernetesServiceType": "NodePort",
     "ingressDomain": "demo.polarpoint.io",
     "istio": true
   }
