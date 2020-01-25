@@ -13,10 +13,8 @@ application {
     serviceDiscoveryType no
     authenticationType jwt
     prodDatabaseType postgresql
-    cacheProvider hazelcast
     buildTool gradle
     clientFramework react
-    useSass true
     testFrameworks [cucumber]
   }
   entities *
@@ -218,8 +216,9 @@ deployment {
   appsFolders [branch, basket, product]
   dockerRepositoryName "image.polarpoint.io"
   serviceDiscoveryType no
-  istio true
-  kubernetesServiceType Ingress
+  istio yes
+  monitoring prometheus
+  kubernetesServiceType NodePort
   kubernetesNamespace dev-hih-01
   ingressDomain "demo.polarpoint.io"
 }
