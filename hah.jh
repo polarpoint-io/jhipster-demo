@@ -216,6 +216,7 @@ deployment {
   appsFolders [branch, basket, product]
   dockerRepositoryName "image.polarpoint.io"
   serviceDiscoveryType no
+  istio autoInjection
   istio true
   monitoring prometheus
   kubernetesServiceType NodePort
